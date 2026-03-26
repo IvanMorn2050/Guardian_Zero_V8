@@ -33,14 +33,11 @@ class AdminController extends Controller
 
         $tiempoPromedio = $tiempoPromedio ? round($tiempoPromedio, 1) . 'h' : 'N/A';
 
-        $zonas = ZonaAfectada::whereNotNull('Coordenadas')->get();
-
         return view('admin.dashboard', compact(
             'incidentesHoy',
             'incidentesCriticos',
             'voluntariosActivos',
-            'tiempoPromedio',
-            'zonas'
+            'tiempoPromedio'
         ));
     }
 
