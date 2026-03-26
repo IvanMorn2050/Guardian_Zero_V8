@@ -277,28 +277,28 @@
     GUARDIAN ZERO
   </a>
 
-  <div class="topbar-nav">
-    <a href="#" class="nav-icon" title="Perfil">
-      <img class="icon-normal" src="{{ url_for('static', filename='icons/perfil.jpeg') }}" alt="Perfil"/>
-      <img class="icon-active"  src="{{ url_for('static', filename='icons/perfil_activo.jpeg') }}" alt=""/>
-    </a>
-    <a href="#" class="nav-icon" title="Capacitaciones">
-      <img class="icon-normal" src="{{ url_for('static', filename='icons/capacitaciones.jpeg') }}" alt="Capacitaciones"/>
-      <img class="icon-active"  src="{{ url_for('static', filename='icons/capacitaciones_activo.jpeg') }}" alt=""/>
-    </a>
-    <a href="#" class="nav-icon" title="Agregar Reporte">
-      <img class="icon-normal" src="{{ url_for('static', filename='icons/agregar_reporte.jpeg') }}" alt="Reporte"/>
-      <img class="icon-active"  src="{{ url_for('static', filename='icons/agregar_reporte_inactivo.jpeg') }}" alt=""/>
-    </a>
-    <a href="#" class="nav-icon" title="Foro">
-      <img class="icon-normal" src="{{ url_for('static', filename='icons/foro.png') }}" alt="Foro"/>
-      <img class="icon-active"  src="{{ url_for('static', filename='icons/foro_activo.jpeg') }}" alt=""/>
-    </a>
-    <a href="{{ url_for('dashboard.index') }}" class="nav-icon active" title="Inicio">
-      <img class="icon-normal" src="{{ url_for('static', filename='icons/home.png') }}" alt="Inicio"/>
-      <img class="icon-active"  src="{{ url_for('static', filename='icons/home_activo.jpeg') }}" alt=""/>
-    </a>
-  </div>
+<div class="topbar-nav">
+  <a href="{{ url_for('dashboard.perfil') }}" class="nav-icon" title="Perfil">
+    <img class="icon-normal" src="{{ url_for('static', filename='icons/perfil.jpeg') }}" alt="Perfil"/>
+    <img class="icon-active"  src="{{ url_for('static', filename='icons/perfil_activo.jpeg') }}" alt=""/>
+  </a>
+  <a href="{{ url_for('dashboard.capacitaciones') }}" class="nav-icon" title="Capacitaciones">
+    <img class="icon-normal" src="{{ url_for('static', filename='icons/capacitaciones.jpeg') }}" alt="Capacitaciones"/>
+    <img class="icon-active"  src="{{ url_for('static', filename='icons/capacitaciones_activo.jpeg') }}" alt=""/>
+  </a>
+  <a href="{{ url_for('dashboard.reporte') }}" class="nav-icon" title="Agregar Reporte">
+    <img class="icon-normal" src="{{ url_for('static', filename='icons/agregar_reporte.jpeg') }}" alt="Reporte"/>
+    <img class="icon-active"  src="{{ url_for('static', filename='icons/agregar_reporte_inactivo.jpeg') }}" alt=""/>
+  </a>
+  <a href="{{ url_for('dashboard.foro') }}" class="nav-icon" title="Foro">
+    <img class="icon-normal" src="{{ url_for('static', filename='icons/foro.png') }}" alt="Foro"/>
+    <img class="icon-active"  src="{{ url_for('static', filename='icons/foro_activo.jpeg') }}" alt=""/>
+  </a>
+  <a href="{{ url_for('dashboard.index') }}" class="nav-icon active" title="Inicio">
+    <img class="icon-normal" src="{{ url_for('static', filename='icons/home.png') }}" alt="Inicio"/>
+    <img class="icon-active"  src="{{ url_for('static', filename='icons/home_activo.jpeg') }}" alt=""/>
+  </a>
+</div>
 
   <div class="topbar-actions">
     <span class="user-name">Hola, <strong>{{ current_user.Nombre }}</strong></span>

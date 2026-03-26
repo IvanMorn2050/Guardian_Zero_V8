@@ -1,0 +1,371 @@
+{% extends "base_dashboard.html" %}
+{% block title %}Mi Perfil - Guardian Zero{% endblock %}
+
+{% block content %}
+<div class="perfil-container">
+
+  <!-- ================= IZQUIERDA ================= -->
+  <div class="left">
+
+    <!-- DATOS PERSONALES -->
+    <div class="card big">
+      <h2>Datos Personales y Preferencias</h2>
+
+      <div class="perfil-top">
+
+        <!-- AVATAR -->
+        <div class="avatar-box">
+          {% if usuario.FotoPerfil %}
+            <img src="data:image/jpeg;base64,{{ usuario.FotoPerfil | b64encode }}">
+          {% else %}
+            <div class="avatar-placeholder">👤</div>
+          {% endif %}
+
+          <form method="POST" action="{{ url_for('dashboard.perfil_foto') }}" enctype="multipart/form-data">
+            <label class="btn-mini" for="foto">Cambiar foto</label>
+            <input id="foto" type="file" name="foto" hidden onchange="this.form.submit()">
+          </form>
+
+          <p class="status">
+            Estatus:
+            <span class="{{ 'ok' if voluntario and voluntario.Estatus == 'Activo' else 'bad' }}">
+              {{ voluntario.Estatus if voluntario else 'No registrado' }}
+            </span>
+          </p>
+
+          <p>Certificados: <b>{{ total_certificados or 0 }}</b></p>
+        </div>
+
+        <!-- FORMULARIO -->
+        <div class="form-box">
+          <form method="POST" action="{{ url_for('dashboard.perfil_actualizar') }}">
+
+            <input type="text"
+                   name="nombre"
+                   value="{{ usuario.Nombre }}"
+                   placeholder="Nombre Completo">
+
+            <input type="email"
+                   name="email"
+                   value="{{ usuario.Email or '' }}"
+                   placeholder="Correo electrónico">
+
+            <input type="tel"
+                   name="telefono"
+                   value="{{ usuario.Telefono or '' }}"
+                   placeholder="Número telefónico">
+
+            <button type="submit">Guardar cambios</button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- HORAS -->
+    <div class="card">
+      <h2>Horas de servicio y Especialidades</h2>
+
+      {% if conocimientos %}
+        {% for item in conocimientos %}
+        <div class="skill">
+          <span>{{ item.Nombre }}</span>
+          <div class="bar">
+            <div style="width:{{ [item.Anios_Experiencia * 10, 100] | min }}%"></div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="empty">Aún no hay especialidades registradas.</p>
+      {% endif %}
+
+      {% if voluntario %}
+      <div class="extra">
+        <p><b>Horario:</b> {{ voluntario.Horario_disponibilidad }}</p>
+        <p><b>Nivel:</b> {{ voluntario.Nivel_Experiencia }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- ================= DERECHA ================= -->
+  <div class="right">
+
+    <!-- RESUMEN -->
+    <div class="card small">
+      <h2>Mi Resumen</h2>
+
+      <div class="resumen-box">
+        <canvas id="chart"></canvas>
+
+        <div class="legend">
+          <p><span style="background:#2bbfbf"></span> Trainings</p>
+          <p><span style="background:#4caf50"></span> Búsqueda</p>
+          <p><span style="background:#2196f3"></span> Field</p>
+          <p><span style="background:#ff9800"></span> Rescate</p>
+          <p><span style="background:#9c27b0"></span> Comandos</p>
+        </div>
+      </div>
+
+      <p class="horas"><b>Horas:</b> {{ total_horas or 0 }}</p>
+    </div>
+
+    <!-- CERTIFICACIONES -->
+    <div class="card small">
+      <h2>Certificaciones</h2>
+
+      {% if certificados %}
+        {% for cert in certificados %}
+          <div class="item">
+            <span>{{ cert.Nombre }}</span>
+            <small>{{ cert.Fecha }}</small>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="empty">Sin certificaciones</p>
+      {% endif %}
+
+      <a href="#" class="btn-outline">Ver certificados</a>
+    </div>
+
+    <!-- FOROS -->
+    <div class="card small">
+      <h2>Mis Foros</h2>
+
+      {% if mis_foros %}
+        {% for f in mis_foros[:2] %}
+        <div class="foro">
+          <img src="{{ url_for('static', filename='img/foro_default.jpg') }}">
+          <div>
+            <p>{{ f.Titulo }}</p>
+            <a href="{{ url_for('dashboard.foro_detalle', blog_id=f.ID_Blog) }}">Ver</a>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="empty">Sin actividad</p>
+      {% endif %}
+
+      <a href="{{ url_for('dashboard.foro') }}" class="btn-outline">Ir a foros</a>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ================= CHART ================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+new Chart(document.getElementById('chart'), {
+  type: 'doughnut',
+  data: {
+    datasets: [{
+      data: [25,15,20,15,10],
+      backgroundColor: ['#2bbfbf','#4caf50','#2196f3','#ff9800','#9c27b0']
+    }]
+  },
+  options: {
+    cutout: '70%',
+    responsive: true,
+    plugins: { legend: { display: false } }
+  }
+});
+</script>
+
+<!-- ================= ESTILOS ================= -->
+<style>
+
+.perfil-container{
+  display:flex;
+  gap:20px;
+  max-width:1100px;
+  margin:auto;
+}
+
+/* columnas */
+.left{ flex:2; display:flex; flex-direction:column; gap:15px; }
+.right{ flex:1; display:flex; flex-direction:column; gap:15px; }
+
+/* cards */
+.card{
+  background:#e5eef2;
+  padding:15px;
+  border-radius:10px;
+}
+
+.card h2{
+  font-size:16px;
+  margin-bottom:10px;
+}
+
+/* tamaños */
+.big{ padding:20px; }
+.small{ padding:12px; }
+
+/* layout perfil */
+.perfil-top{
+  display:flex;
+  gap:25px;
+  align-items:flex-start;
+}
+
+/* avatar */
+.avatar-box{
+  width:140px;
+  text-align:center;
+  flex-shrink:0;
+}
+
+.avatar-box img{
+  width:110px;
+  height:110px;
+  border-radius:50%;
+  object-fit:cover;
+  border:3px solid #2bbfbf;
+}
+
+.avatar-placeholder{
+  width:110px;
+  height:110px;
+  border-radius:50%;
+  background:#ccc;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:32px;
+}
+
+/* boton foto */
+.btn-mini{
+  display:inline-block;
+  background:#2bbfbf;
+  color:white;
+  padding:5px 10px;
+  border-radius:6px;
+  font-size:12px;
+  cursor:pointer;
+  margin-top:6px;
+}
+
+/* estado */
+.status{ font-size:12px; }
+.ok{ color:green; }
+.bad{ color:red; }
+
+/* FORM MEJORADO 🔥 */
+.form-box{
+  flex:1;
+  width:100%;
+}
+
+.form-box form{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  width:100%;
+}
+
+/* 🔥 INPUTS MÁS LARGOS */
+.form-box input{
+  width:100%;
+  padding:12px 14px;
+  border:none;
+  border-radius:10px;
+  font-size:14px;
+  box-sizing:border-box;
+}
+
+.form-box input:focus{
+  outline:none;
+  box-shadow:0 0 0 2px rgba(43,191,191,0.3);
+}
+
+/* BOTON */
+.form-box button{
+  background:#2bbfbf;
+  color:white;
+  border:none;
+  padding:12px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+/* skills */
+.skill{ margin-bottom:8px; }
+.bar{ background:#ccc; height:6px; border-radius:3px; }
+.bar div{ background:#2bbfbf; height:100%; }
+
+/* resumen */
+.resumen-box{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.resumen-box canvas{
+  width:80px !important;
+  height:80px !important;
+}
+
+/* listas */
+.item{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  background:white;
+  padding:6px;
+  border-radius:5px;
+  margin-bottom:5px;
+}
+
+/* foros */
+.foro{
+  display:flex;
+  gap:8px;
+  background:white;
+  padding:6px;
+  border-radius:6px;
+  margin-bottom:6px;
+}
+
+.foro img{
+  width:60px;
+  border-radius:5px;
+}
+
+/* botones */
+.btn-outline{
+  display:block;
+  text-align:center;
+  border:1px solid #2bbfbf;
+  color:#2bbfbf;
+  padding:6px;
+  border-radius:6px;
+  font-size:12px;
+  margin-top:8px;
+}
+
+/* textos */
+.empty{
+  font-size:12px;
+  color:gray;
+}
+
+.horas{
+  font-size:12px;
+  margin-top:5px;
+}
+
+/* RESPONSIVE */
+@media (max-width:768px){
+  .perfil-top{
+    flex-direction:column;
+    align-items:center;
+  }
+}
+
+</style>
+
+{% endblock %}

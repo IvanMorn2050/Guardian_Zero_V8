@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Guardian Zero{% endblock %}</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal-dark:  #1a6b73;
+      --teal-mid:   #1a9ea8;
+      --teal-light: #4fc3cb;
+      --navy:       #1a3a4a;
+      --bg-main:    #dde8ec;
+      --bg-card:    #e8f0f3;
+      --navbar:     #B6C3C9;
+      --white:      #ffffff;
+      --text-dark:  #1a3a4a;
+      --text-mid:   #4a6475;
+      --text-light: #8a9eaa;
+      --error:      #e05252;
+      --success:    #2e9e6e;
+      --warning:    #e09c42;
+      --shadow-sm:  0 2px 8px rgba(26,107,115,.12);
+      --shadow-md:  0 6px 24px rgba(26,107,115,.18);
+      --radius:     14px;
+      --radius-sm:  8px;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg-main);
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+
+    /* ══ TOPBAR (idéntica al Index.html) ══ */
+    .topbar {
+      background: var(--navbar);
+      border-bottom: 1px solid rgba(26,107,115,.18);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 20px;
+      height: 58px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: .5px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .topbar-brand img { height: 36px; width: auto; object-fit: contain; }
+
+    .topbar-nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      justify-content: center;
+    }
+    .nav-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background .2s;
+      text-decoration: none;
+    }
+    .nav-icon:hover  { background: rgba(26,158,168,.18); }
+    .nav-icon.active { background: var(--teal-mid); }
+    .nav-icon .icon-normal { width: 26px; height: 26px; object-fit: contain; display: block; }
+    .nav-icon .icon-active  { width: 26px; height: 26px; object-fit: contain; display: none; }
+    .nav-icon.active .icon-normal { display: none; }
+    .nav-icon.active .icon-active  { display: block; }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .user-name { font-size: .84rem; color: var(--navy); font-weight: 500; }
+    .btn-logout {
+      background: var(--teal-mid);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: .83rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-logout:hover { background: var(--teal-dark); }
+
+    /* ══ Contenido principal ══ */
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* ══ Flash messages ══ */
+    .flash-container {
+      position: fixed;
+      top: 68px;
+      right: 16px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 360px;
+    }
+    .flash {
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: .87rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+      animation: slideIn .3s ease;
+    }
+    .flash.error   { background: var(--error);   color: #fff; }
+    .flash.success { background: var(--success);  color: #fff; }
+    .flash.info    { background: var(--teal-mid); color: #fff; }
+    .flash.warning { background: var(--warning);  color: #fff; }
+    @keyframes slideIn {
+      from { transform: translateX(110%); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+
+    /* ══ Card compartida ══ */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 20px;
+    }
+
+    /* ══ Botón primario ══ */
+    .btn-primary {
+      background: var(--teal-mid);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 36px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+    .btn-primary:hover {
+      background: var(--teal-dark);
+      transform: translateY(-1px);
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- Flash messages -->
+<div class="flash-container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}" onclick="this.remove()">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+<!-- ═══ TOPBAR (igual que Index.html) ═══ -->
+<nav class="topbar">
+  <a href="{{ url_for('dashboard.index') }}" class="topbar-brand">
+    <img src="{{ url_for('static', filename='img/LOGO_GZ.png') }}" alt="Guardian Zero"/>
+    GUARDIAN ZERO
+  </a>
+
+  <div class="topbar-nav">
+    <a href="{{ url_for('dashboard.perfil') }}"
+       class="nav-icon {{ 'active' if active_page == 'perfil' }}" title="Perfil">
+      <img class="icon-normal" src="{{ url_for('static', filename='icons/perfil.jpeg') }}" alt="Perfil"/>
+      <img class="icon-active"  src="{{ url_for('static', filename='icons/perfil_activo.jpeg') }}" alt=""/>
+    </a>
+    <a href="{{ url_for('dashboard.capacitaciones') }}"
+       class="nav-icon {{ 'active' if active_page == 'capacitaciones' }}" title="Capacitaciones">
+      <img class="icon-normal" src="{{ url_for('static', filename='icons/capacitaciones.jpeg') }}" alt="Capacitaciones"/>
+      <img class="icon-active"  src="{{ url_for('static', filename='icons/capacitaciones_activo.jpeg') }}" alt=""/>
+    </a>
+    <a href="{{ url_for('dashboard.reporte') }}"
+       class="nav-icon {{ 'active' if active_page == 'reporte' }}" title="Agregar Reporte">
+      <img class="icon-normal" src="{{ url_for('static', filename='icons/agregar_reporte.jpeg') }}" alt="Reporte"/>
+      <img class="icon-active"  src="{{ url_for('static', filename='icons/agregar_reporte_inactivo.jpeg') }}" alt=""/>
+    </a>
+    <a href="{{ url_for('dashboard.foro') }}"
+       class="nav-icon {{ 'active' if active_page == 'foro' }}" title="Foro">
+      <img class="icon-normal" src="{{ url_for('static', filename='icons/foro.png') }}" alt="Foro"/>
+      <img class="icon-active"  src="{{ url_for('static', filename='icons/foro_activo.jpeg') }}" alt=""/>
+    </a>
+    <a href="{{ url_for('dashboard.index') }}"
+       class="nav-icon {{ 'active' if active_page == 'home' }}" title="Inicio">
+      <img class="icon-normal" src="{{ url_for('static', filename='icons/home.png') }}" alt="Inicio"/>
+      <img class="icon-active"  src="{{ url_for('static', filename='icons/home_activo.jpeg') }}" alt=""/>
+    </a>
+  </div>
+
+  <div class="topbar-actions">
+    <span class="user-name">Hola, <strong>{{ current_user.Nombre }}</strong></span>
+    <a href="{{ url_for('auth.logout') }}">
+      <button class="btn-logout">Salir</button>
+    </a>
+  </div>
+</nav>
+
+<!-- Contenido de cada vista -->
+<div class="app-container">
+  {% block content %}{% endblock %}
+</div>
+
+<script>
+  document.querySelectorAll('.flash').forEach(el => {
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .4s'; }, 4500);
+    setTimeout(() => el.remove(), 5000);
+  });
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>
