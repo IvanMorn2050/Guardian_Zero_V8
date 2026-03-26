@@ -1,0 +1,166 @@
+{% extends "base_dashboard.html" %}
+{% block title %}Foro Comunitario - Guardian Zero{% endblock %}
+
+{% block content %}
+<div class="foro-container">
+
+  <!-- IZQUIERDA: Discusiones -->
+  <div class="foro-left card">
+    <h2 class="section-title">ÚLTIMAS DISCUSIONES Y PREGUNTAS</h2>
+
+    <div class="discusiones-list">
+      {% set demo_discusiones = [
+        {'id': 1, 'titulo': 'Experiencia sismo 19S 2017: Lecciones', 'autor': 'Carlos Méndez / Voluntario', 'tiempo': 'hace 2 días'},
+        {'id': 2, 'titulo': 'Coordinación local en Chiapas: Ayuda', 'autor': 'Ana López / Voluntario', 'tiempo': 'hace 5 días'},
+        {'id': 3, 'titulo': 'Cómo asegurar estanterías en casa', 'autor': 'Pedro Ruiz / Civil', 'tiempo': 'hace 1 semana'},
+        {'id': 4, 'titulo': 'Primeros Auxilios básicos: Curso rápido?', 'autor': 'María Gómez / Voluntario', 'tiempo': 'hace 2 semanas'},
+      ] %}
+
+      {% if discusiones %}
+        {% for d in discusiones %}
+        <div class="discusion-item">
+          <div class="disc-avatar">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="16" fill="#d0e8e8"/>
+              <circle cx="16" cy="13" r="5" fill="#2bbfbf"/>
+              <ellipse cx="16" cy="26" rx="9" ry="6" fill="#2bbfbf"/>
+            </svg>
+          </div>
+          <div class="disc-info">
+            <h4>{{ d.Titulo }}</h4>
+            <p>Autor: {{ d.Autor }} / {{ d.Tipo }}</p>
+            <p class="disc-time">Publicado {{ d.Tiempo }}</p>
+          </div>
+          <a href="/foro/{{ d.ID }}" class="btn-comentario">Ver comentario</a>
+        </div>
+        {% endfor %}
+      {% else %}
+        {% for d in demo_discusiones %}
+        <div class="discusion-item">
+          <div class="disc-avatar">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="16" fill="#d0e8e8"/>
+              <circle cx="16" cy="13" r="5" fill="#2bbfbf"/>
+              <ellipse cx="16" cy="26" rx="9" ry="6" fill="#2bbfbf"/>
+            </svg>
+          </div>
+          <div class="disc-info">
+            <h4>{{ d.titulo }}</h4>
+            <p>Autor: [{{ d.autor }}]</p>
+            <p class="disc-time">Publicado [{{ d.tiempo }}]</p>
+          </div>
+          <a href="#" class="btn-comentario">Ver comentario</a>
+        </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <div class="nueva-disc-wrapper">
+      <a href="/foro/nueva" class="btn-nueva">Crear Nueva Discusión</a>
+    </div>
+  </div>
+
+  <!-- DERECHA: Blogs, Guías -->
+  <div class="foro-right">
+
+    <div class="card blog-featured">
+      <h2 class="section-title-right">BLOGS, GUÍAS Y APRENDIZAJES</h2>
+
+      <!-- Blog destacado -->
+      <div class="blog-card">
+        <div class="blog-img-wrapper">
+          <img src="{{ url_for('static', filename='img/sismo_blog.jpg') }}" alt="Blog" onerror="this.style.display='none'">
+          <div class="blog-img-fallback">🏚️</div>
+        </div>
+        <div class="blog-card-body">
+          <h4>LECCIONES APRENDIDAS: SISMO DEL 19 SEPTIEMBRE 2017</h4>
+          <p>Compendio de experiencias, recomendaciones de expertos y aprendizajes claves.</p>
+          <a href="/blog/1" class="btn-blog">+ Ver Guía/Blog</a>
+        </div>
+      </div>
+
+      <!-- Categorías de blogs -->
+      <div class="blog-categories">
+        <a href="/blog/seguridad" class="cat-item">
+          <span class="cat-icon">🪜</span>
+          <span>Recomendaciones de Seguridad</span>
+        </a>
+        <a href="/blog/primeros-auxilios" class="cat-item">
+          <span class="cat-icon">🧳</span>
+          <span>Guías de Primeros Auxilios</span>
+        </a>
+        <a href="/blog/experiencias" class="cat-item">
+          <span class="cat-icon">✅</span>
+          <span>Experiencias de Voluntarios</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: Nueva Discusión -->
+<div id="modal-disc" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <h3>Nueva Discusión</h3>
+    <form method="POST" action="/foro/nueva">
+      <input type="text" name="titulo" placeholder="Título de la discusión" class="modal-input" required>
+      <textarea name="contenido" placeholder="Describe tu pregunta o experiencia..." class="modal-textarea" rows="5" required></textarea>
+      <div class="modal-actions">
+        <button type="button" onclick="document.getElementById('modal-disc').style.display='none'" class="btn-cancel">Cancelar</button>
+        <button type="submit" class="btn-send">Publicar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Botón crear discusión puede abrir modal en vez de navegar
+  document.querySelector('.btn-nueva').addEventListener('click', function(e) {
+    e.preventDefault();
+    document.getElementById('modal-disc').style.display = 'flex';
+  });
+</script>
+
+<style>
+.foro-container { display: flex; gap: 24px; padding: 24px; max-width: 1100px; margin: 0 auto; }
+.card { background: #f0f0f0; border-radius: 12px; padding: 20px; }
+.foro-left { flex: 1.3; display: flex; flex-direction: column; }
+.foro-right { flex: 1; }
+.section-title { font-size: 1rem; font-weight: 800; color: #222; margin-bottom: 16px; text-transform: uppercase; }
+.section-title-right { font-size: 1rem; font-weight: 800; color: #222; margin-bottom: 14px; }
+.discusiones-list { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.discusion-item { display: flex; align-items: center; gap: 12px; background: white; border-radius: 10px; padding: 12px 14px; }
+.disc-avatar { flex-shrink: 0; }
+.disc-info { flex: 1; }
+.disc-info h4 { font-size: 0.88rem; font-weight: 700; margin: 0 0 2px; }
+.disc-info p { font-size: 0.75rem; color: #555; margin: 0; }
+.disc-time { color: #999 !important; font-style: italic; }
+.btn-comentario { background: white; border: 2px solid #333; color: #333; padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; text-decoration: none; white-space: nowrap; transition: all 0.2s; }
+.btn-comentario:hover { background: #2bbfbf; color: white; border-color: #2bbfbf; }
+.nueva-disc-wrapper { text-align: center; margin-top: 16px; }
+.btn-nueva { display: inline-block; background: white; border: 2px solid #333; color: #333; padding: 10px 32px; border-radius: 8px; font-weight: 700; font-size: 0.88rem; text-decoration: none; transition: all 0.2s; }
+.btn-nueva:hover { background: #2bbfbf; color: white; border-color: #2bbfbf; }
+.blog-featured { height: 100%; box-sizing: border-box; }
+.blog-card { display: flex; gap: 12px; background: white; border-radius: 10px; padding: 12px; margin-bottom: 14px; }
+.blog-img-wrapper { width: 80px; height: 80px; border-radius: 8px; overflow: hidden; position: relative; background: #d0e8e8; flex-shrink: 0; }
+.blog-img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+.blog-img-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+.blog-card-body h4 { font-size: 0.82rem; font-weight: 700; margin: 0 0 4px; }
+.blog-card-body p { font-size: 0.75rem; color: #555; margin: 0 0 6px; }
+.btn-blog { display: inline-block; border: 1px solid #2bbfbf; color: #2bbfbf; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; text-decoration: none; }
+.blog-categories { display: flex; flex-direction: column; gap: 10px; }
+.cat-item { display: flex; align-items: center; gap: 10px; background: white; border-radius: 10px; padding: 12px 14px; font-size: 0.88rem; font-weight: 600; text-decoration: none; color: #333; transition: all 0.2s; }
+.cat-item:hover { background: #2bbfbf; color: white; }
+.cat-icon { font-size: 1.2rem; }
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-box { background: white; border-radius: 12px; padding: 28px; width: 460px; max-width: 95vw; }
+.modal-box h3 { margin: 0 0 16px; color: #1a7a7a; }
+.modal-input, .modal-textarea { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 0.9rem; margin-bottom: 12px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.btn-cancel { background: #eee; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.btn-send { background: #2bbfbf; color: white; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+@media (max-width: 768px) { .foro-container { flex-direction: column; } }
+</style>
+{% endblock %}
