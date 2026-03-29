@@ -1,0 +1,155 @@
+{% extends "base_dashboard.html" %}
+{% block title %}{{ blog.Titulo }} - Foro Guardian Zero{% endblock %}
+
+{% block content %}
+<div class="detalle-container">
+
+  <!-- Botón volver -->
+  <a href="{{ url_for('dashboard.foro') }}" class="btn-volver">← Volver al Foro</a>
+
+  <!-- Publicación principal -->
+  <div class="post-card">
+    <div class="post-header">
+      <div class="post-avatar">👤</div>
+      <div class="post-meta">
+        <h2 class="post-titulo">{{ blog.Titulo }}</h2>
+        <span class="post-autor">Publicación del foro</span>
+      </div>
+    </div>
+    <div class="post-body">
+      {% for c in contenidos %}
+        <p>{{ c.Contenido }}</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Respuestas -->
+  <div class="respuestas-section">
+    <h3 class="resp-titulo">
+      Respuestas
+      <span class="resp-count">{{ respuestas | length }}</span>
+    </h3>
+
+    {% if respuestas %}
+      {% for r in respuestas %}
+      <div class="resp-card">
+        <div class="resp-avatar">👤</div>
+        <div class="resp-content">
+          <div class="resp-header">
+            <strong class="resp-nombre">{{ r.usuario.Nombre }}</strong>
+            <span class="resp-fecha">{{ r.Fecha.strftime('%d/%m/%Y %H:%M') }}</span>
+          </div>
+          <p class="resp-texto">{{ r.Contenido }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="empty-resp">Aún no hay respuestas. ¡Sé el primero en responder!</p>
+    {% endif %}
+  </div>
+
+  <!-- Formulario para responder -->
+  <div class="form-resp-card">
+    <h3 class="form-resp-titulo">Agregar respuesta</h3>
+    <form method="POST" action="{{ url_for('dashboard.foro_responder', blog_id=blog.ID_Blog) }}">
+      <textarea name="contenido" class="resp-textarea"
+                placeholder="Escribe tu respuesta..." rows="4" required></textarea>
+      <div class="form-resp-footer">
+        <button type="submit" class="btn-publicar">Publicar respuesta</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<style>
+.detalle-container {
+  max-width: 780px; margin: 0 auto; padding: 24px 16px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+.btn-volver {
+  display: inline-block; font-size: .85rem; font-weight: 600;
+  color: #1a6b73; text-decoration: none;
+  padding: 6px 0; transition: color .2s;
+}
+.btn-volver:hover { color: #1a9ea8; }
+
+/* Post principal */
+.post-card {
+  background: #e2eaed; border-radius: 12px;
+  padding: 22px 24px; box-shadow: 0 2px 8px rgba(26,107,115,.1);
+}
+.post-header {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+}
+.post-avatar {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: #b0cdd4; display: flex; align-items: center;
+  justify-content: center; font-size: 1.4rem; flex-shrink: 0;
+}
+.post-titulo { font-size: 1.1rem; font-weight: 700; color: #1a3a4a; margin: 0 0 2px; }
+.post-autor  { font-size: .78rem; color: #4a6475; }
+.post-body {
+  max-height: 300px; overflow-y: auto;
+  padding-right: 6px;
+}
+.post-body p { font-size: .9rem; color: #1a3a4a; line-height: 1.7; margin: 0; word-wrap: break-word; overflow-wrap: break-word; }
+
+/* Sección respuestas */
+.respuestas-section { display: flex; flex-direction: column; gap: 12px; }
+.resp-titulo {
+  font-size: .95rem; font-weight: 700; color: #1a3a4a;
+  display: flex; align-items: center; gap: 10px; margin: 0 0 4px;
+}
+.resp-count {
+  background: #1a9ea8; color: #fff;
+  font-size: .72rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px;
+}
+
+.resp-card {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: #f4f8fa; border-radius: 10px; padding: 14px 16px;
+  border-left: 3px solid #1a9ea8;
+}
+.resp-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #cfdde3; display: flex; align-items: center;
+  justify-content: center; font-size: 1rem; flex-shrink: 0;
+}
+.resp-content { flex: 1; min-width: 0; }
+.resp-header  { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+.resp-nombre  { font-size: .85rem; color: #1a3a4a; }
+.resp-fecha   { font-size: .72rem; color: #8a9eaa; }
+.resp-texto   { font-size: .85rem; color: #1a3a4a; line-height: 1.6; margin: 0; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap; max-height: 150px; overflow-y: auto; padding-right: 4px; }
+
+.empty-resp {
+  font-size: .85rem; color: #8a9eaa;
+  text-align: center; padding: 20px 0; font-style: italic;
+}
+
+/* Formulario respuesta */
+.form-resp-card {
+  background: #e2eaed; border-radius: 12px; padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(26,107,115,.1);
+}
+.form-resp-titulo { font-size: .95rem; font-weight: 700; color: #1a3a4a; margin: 0 0 12px; }
+.resp-textarea {
+  width: 100%; box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word;
+  border: 1px solid #cfdde3; border-radius: 8px;
+  padding: 10px 12px; font-size: .88rem; color: #1a3a4a;
+  resize: vertical; outline: none; font-family: inherit;
+  background: #fff;
+}
+.resp-textarea:focus { border-color: #1a9ea8; }
+.form-resp-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
+.btn-publicar {
+  background: #1a9ea8; color: #fff; border: none;
+  border-radius: 8px; padding: 9px 24px;
+  font-size: .88rem; font-weight: 600; cursor: pointer;
+  transition: background .2s;
+}
+.btn-publicar:hover { background: #1a6b73; }
+</style>
+{% endblock %}

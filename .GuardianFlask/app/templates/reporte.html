@@ -1,6 +1,10 @@
 {% extends "base_dashboard.html" %}
 {% block title %}Nuevo Reporte - Guardian Zero{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% endblock %}
+
 {% block content %}
 <div class="reporte-container">
 
@@ -59,10 +63,7 @@
 
           <div class="geo-body">
 
-            <div class="map-placeholder">
-              <img src="{{ url_for('static', filename='img/mexico_map.png') }}" class="map-img">
-              <div class="map-pin">📍</div>
-            </div>
+            <div id="mapa-reporte" class="map-placeholder"></div>
 
             <div class="geo-info">
               <p id="gps-coords">[Nombre del GPS / Dirección]</p>
@@ -115,28 +116,54 @@
   </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+  // Inicializar mapa centrado en México
+  var mapa = L.map('mapa-reporte', { zoomControl: false, dragging: false, scrollWheelZoom: false })
+               .setView([23.6345, -102.5528], 4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(mapa);
+  var marcador = null;
+
 function activarGPS() {
-  const badge = document.getElementById('gps-status');
+  const badge  = document.getElementById('gps-status');
   const coords = document.getElementById('gps-coords');
-  const btn = document.getElementById('btn-gps');
+  const btn    = document.getElementById('btn-gps');
 
   if (!navigator.geolocation) {
-    alert("GPS no disponible");
+    alert("GPS no disponible en este navegador.");
     return;
   }
+
+  btn.textContent = "Obteniendo ubicación...";
+  btn.disabled = true;
 
   navigator.geolocation.getCurrentPosition(pos => {
     const lat = pos.coords.latitude.toFixed(6);
     const lng = pos.coords.longitude.toFixed(6);
 
-    document.getElementById('latitud').value = lat;
+    document.getElementById('latitud').value  = lat;
     document.getElementById('longitud').value = lng;
 
-    coords.textContent = `Lat: ${lat}, Lng: ${lng}`;
-    badge.textContent = "GPS ACTIVADO";
-    badge.className = "gps-badge gps-on";
-    btn.textContent = "✓ Ubicación capturada";
+    coords.textContent   = `Lat: ${lat}, Lng: ${lng}`;
+    badge.textContent    = "GPS ACTIVADO";
+    badge.className      = "gps-badge gps-on";
+    btn.textContent      = "✓ Ubicación capturada";
+    btn.disabled         = false;
+
+    // Habilitar interacción y centrar mapa en la ubicación real
+    mapa.dragging.enable();
+    mapa.scrollWheelZoom.enable();
+    mapa.setView([lat, lng], 15);
+
+    if (marcador) mapa.removeLayer(marcador);
+    marcador = L.marker([lat, lng]).addTo(mapa)
+                .bindPopup("Tu ubicación").openPopup();
+  }, () => {
+    alert("No se pudo obtener la ubicación. Verifica los permisos de GPS.");
+    btn.textContent = "Activar GPS";
+    btn.disabled = false;
   });
 }
 
@@ -144,19 +171,14 @@ function previewMedia(input, tipo) {
   const preview = document.getElementById('media-preview');
   const file = input.files[0];
   if (!file) return;
-
   const reader = new FileReader();
-
   reader.onload = e => {
     let el = "";
-
-    if (tipo === "foto") el = `<img src="${e.target.result}">`;
+    if (tipo === "foto")  el = `<img src="${e.target.result}">`;
     if (tipo === "video") el = `<video src="${e.target.result}" controls></video>`;
     if (tipo === "audio") el = `<audio src="${e.target.result}" controls></audio>`;
-
     preview.innerHTML += el;
   };
-
   reader.readAsDataURL(file);
 }
 </script>
@@ -264,23 +286,12 @@ function previewMedia(input, tipo) {
 }
 
 .map-placeholder {
-  width: 110px;
-  height: 80px;
+  width: 180px;
+  height: 130px;
   border-radius: 10px;
   overflow: hidden;
-  position: relative;
-}
-
-.map-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.map-pin {
-  position: absolute;
-  top: 30%;
-  left: 40%;
+  flex-shrink: 0;
+  z-index: 0;
 }
 
 .geo-info {

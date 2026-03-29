@@ -31,3 +31,6 @@ class Config:
 
     # --- Token de recuperación (expira en 30 min) ---
     TOKEN_EXPIRATION_SECONDS = 1800
+
+    # --- Subida de archivos ---
+    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB máximo

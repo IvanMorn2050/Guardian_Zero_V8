@@ -1,4 +1,5 @@
 import os
+import base64
 from flask import Flask, redirect, url_for
 from flask_login import LoginManager
 from flask_mail import Mail
@@ -20,6 +21,13 @@ def create_app() -> Flask:
         static_folder=os.path.join(_BASE_DIR, "static"),
     )
     app.config.from_object(Config)
+
+    # ── Filtros Jinja2 ──
+    @app.template_filter("b64encode")
+    def b64encode_filter(data):
+        if data is None:
+            return ""
+        return base64.b64encode(data).decode("utf-8")
 
     # ── Extensiones ──
     db.init_app(app)

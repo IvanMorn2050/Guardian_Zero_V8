@@ -22,7 +22,7 @@ class Usuario(UserMixin, db.Model):
                         default="Civil"
                      )
     Fecha_Registro = db.Column(db.DateTime, default=datetime.utcnow)
-    FotoPerfil     = db.Column(db.LargeBinary, nullable=True)
+    FotoPerfil     = db.Column(db.LargeBinary(length=16777215), nullable=True)  # MEDIUMBLOB
 
     # Flask-Login requiere que get_id() devuelva el PK como string
     def get_id(self):
@@ -54,6 +54,18 @@ class ContenidoBlog(db.Model):
                             db.Integer,
                             db.ForeignKey("blog.ID_Blog", ondelete="CASCADE")
                         )
+
+
+class RespuestaForo(db.Model):
+    __tablename__ = "respuesta_foro"
+
+    ID         = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    ID_Blog    = db.Column(db.Integer, db.ForeignKey("blog.ID_Blog", ondelete="CASCADE"), nullable=False)
+    ID_Usuario = db.Column(db.Integer, db.ForeignKey("usuario.ID"), nullable=False)
+    Contenido  = db.Column(db.Text, nullable=False)
+    Fecha      = db.Column(db.DateTime, default=datetime.utcnow)
+    usuario    = db.relationship("Usuario", backref="respuestas_foro")
+    blog       = db.relationship("Blog", backref="respuestas")
 
 
 # ============================================================
@@ -211,6 +223,7 @@ class Evidencia(db.Model):
 
     ID                = db.Column(db.Integer, primary_key=True, autoincrement=True)
     Archivo_Ruta      = db.Column(db.Text)
+    Nombre            = db.Column(db.String(150), nullable=True)
     Fecha_Captura     = db.Column(db.DateTime, default=datetime.utcnow)
     Tipo_Evidencia_ID = db.Column(db.Integer, db.ForeignKey("tipo_evidencia.ID"))
     ID_Reporte        = db.Column(db.Integer, db.ForeignKey("reporte.ID"))

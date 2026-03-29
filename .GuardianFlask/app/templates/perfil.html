@@ -2,370 +2,699 @@
 {% block title %}Mi Perfil - Guardian Zero{% endblock %}
 
 {% block content %}
-<div class="perfil-container">
+<div class="perfil-wrapper">
 
-  <!-- ================= IZQUIERDA ================= -->
-  <div class="left">
+  <!-- ══ COLUMNA IZQUIERDA ══ -->
+  <div class="col-left">
 
-    <!-- DATOS PERSONALES -->
-    <div class="card big">
-      <h2>Datos Personales y Preferencias</h2>
+    <!-- Datos Personales -->
+    <div class="pcard">
+      <h2 class="pcard-title">Datos Personales y Preferencias</h2>
+      <div class="datos-inner">
 
-      <div class="perfil-top">
+        <!-- Foto -->
+        <div class="foto-col">
+          <div class="avatar-ring" id="avatar-ring">
+            {% if usuario.FotoPerfil %}
+              <img src="data:image/jpeg;base64,{{ usuario.FotoPerfil | b64encode }}"
+                   class="avatar-img" id="avatar-preview" alt="Foto">
+            {% else %}
+              <div class="avatar-empty" id="avatar-empty">👤</div>
+              <img class="avatar-img" id="avatar-preview" alt="Foto"
+                   style="display:none">
+            {% endif %}
+          </div>
 
-        <!-- AVATAR -->
-        <div class="avatar-box">
-          {% if usuario.FotoPerfil %}
-            <img src="data:image/jpeg;base64,{{ usuario.FotoPerfil | b64encode }}">
-          {% else %}
-            <div class="avatar-placeholder">👤</div>
-          {% endif %}
-
-          <form method="POST" action="{{ url_for('dashboard.perfil_foto') }}" enctype="multipart/form-data">
-            <label class="btn-mini" for="foto">Cambiar foto</label>
-            <input id="foto" type="file" name="foto" hidden onchange="this.form.submit()">
+          <!-- Form foto corregido -->
+          <form method="POST"
+                action="{{ url_for('dashboard.perfil_foto') }}"
+                enctype="multipart/form-data"
+                id="foto-form">
+            <label class="foto-btn" for="foto_in">📷 Cambiar foto</label>
+            <input type="file" id="foto_in" name="foto"
+                   accept="image/jpeg,image/png,image/webp,image/gif"
+                   style="display:none"
+                   onchange="previewFoto(this)">
           </form>
+          <button class="btn-upload-confirm" id="btn-confirm-foto"
+                  style="display:none"
+                  onclick="document.getElementById('foto-form').submit()">
+            ✅ Guardar foto
+          </button>
 
-          <p class="status">
+          <p class="vol-status">
             Estatus:
-            <span class="{{ 'ok' if voluntario and voluntario.Estatus == 'Activo' else 'bad' }}">
+            <span class="{{ 'badge-verde' if voluntario and voluntario.Estatus == 'Activo' else 'badge-rojo' }}">
               {{ voluntario.Estatus if voluntario else 'No registrado' }}
             </span>
           </p>
-
-          <p>Certificados: <b>{{ total_certificados or 0 }}</b></p>
+          <p class="cert-line">Certificados: <strong>{{ total_certificados or 0 }}</strong></p>
         </div>
 
-        <!-- FORMULARIO -->
-        <div class="form-box">
+        <!-- Campos -->
+        <div class="campos-col">
           <form method="POST" action="{{ url_for('dashboard.perfil_actualizar') }}">
-
-            <input type="text"
-                   name="nombre"
-                   value="{{ usuario.Nombre }}"
-                   placeholder="Nombre Completo">
-
-            <input type="email"
-                   name="email"
-                   value="{{ usuario.Email or '' }}"
-                   placeholder="Correo electrónico">
-
-            <input type="tel"
-                   name="telefono"
-                   value="{{ usuario.Telefono or '' }}"
-                   placeholder="Número telefónico">
-
-            <button type="submit">Guardar cambios</button>
+            <div class="campo-row">
+              <input type="text"  name="nombre"   value="{{ usuario.Nombre }}"
+                     placeholder="Nombre Completo" class="campo-input">
+              <span class="campo-icon">✏️</span>
+            </div>
+            <div class="campo-row">
+              <input type="email" name="email"    value="{{ usuario.Email or '' }}"
+                     placeholder="Correo electrónico" class="campo-input">
+              <span class="campo-icon">✏️</span>
+            </div>
+            <div class="campo-row">
+              <input type="tel"   name="telefono" value="{{ usuario.Telefono or '' }}"
+                     placeholder="Número telefónico" class="campo-input">
+              <span class="campo-icon">✏️</span>
+            </div>
+            <button type="submit" class="btn-guardar">Guardar cambios</button>
           </form>
-        </div>
 
+          {% if curriculum and curriculum.Descripcion_CV %}
+          {% set etiquetas = {
+            'primeros_auxilios':  'Primeros auxilios',
+            'rescate_urbano':     'Rescate urbano',
+            'busqueda':           'Búsqueda y rescate',
+            'evacuacion':         'Evacuación',
+            'comunicaciones':     'Comunicaciones',
+            'logistica':          'Logística'
+          } %}
+          <div class="habilidades-tags">
+            {% for key, label in etiquetas.items() %}
+              {% if key in curriculum.Descripcion_CV %}
+              <span class="hab-tag">{{ label }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+          {% endif %}
+
+        </div>
       </div>
     </div>
 
-    <!-- HORAS -->
-    <div class="card">
-      <h2>Horas de servicio y Especialidades</h2>
-
-      {% if conocimientos %}
-        {% for item in conocimientos %}
-        <div class="skill">
-          <span>{{ item.Nombre }}</span>
-          <div class="bar">
-            <div style="width:{{ [item.Anios_Experiencia * 10, 100] | min }}%"></div>
+    {% if not voluntario or voluntario.Estatus != 'Activo' %}
+    <!-- ══ CUESTIONARIO DESPLEGABLE ══ -->
+    <div class="pcard cuestionario-card">
+      <div class="cuest-toggle" id="cuest-toggle" onclick="toggleCuest()">
+        <div class="cuest-toggle-left">
+          <span class="cuest-icon">🛡️</span>
+          <div>
+            <p class="cuest-toggle-title">Cuestionario de Voluntario</p>
+            <p class="cuest-toggle-sub">
+              {% if ya_respondio %}
+                ✅ Ya completaste este cuestionario — en espera de aprobación
+              {% else %}
+                Completa tu perfil para participar en misiones de rescate
+              {% endif %}
+            </p>
           </div>
         </div>
-        {% endfor %}
-      {% else %}
-        <p class="empty">Aún no hay especialidades registradas.</p>
-      {% endif %}
-
-      {% if voluntario %}
-      <div class="extra">
-        <p><b>Horario:</b> {{ voluntario.Horario_disponibilidad }}</p>
-        <p><b>Nivel:</b> {{ voluntario.Nivel_Experiencia }}</p>
+        <span class="cuest-arrow" id="cuest-arrow">▼</span>
       </div>
-      {% endif %}
+
+      <div class="cuest-body" id="cuest-body" style="display:none">
+        {% if ya_respondio %}
+        <div class="cuest-respondido">
+          <p class="cuest-resp-msg">✅ Ya enviaste tu cuestionario. El equipo de coordinación está revisando tu perfil.</p>
+          {% if curriculum and curriculum.Descripcion_CV %}
+          <div class="cuest-resp-detalle">
+            <p class="cuest-resp-label">Tus respuestas registradas:</p>
+            <p class="cuest-resp-texto">{{ curriculum.Descripcion_CV }}</p>
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="progress-header">
+          <span class="progress-label">Progreso: <strong id="progress-text">0 / 8</strong></span>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-bar" style="width:0%"></div>
+          </div>
+        </div>
+        <form method="POST" action="{{ url_for('dashboard.perfil_cuestionario') }}" id="cuest-form">
+          <div class="cuest-section">
+            <p class="cuest-q">1. ¿Cuál es tu nivel de experiencia en situaciones de emergencia?</p>
+            <div class="radio-group">
+              <label class="radio-opt"><input type="radio" name="experiencia" value="Ninguna"> Sin experiencia previa</label>
+              <label class="radio-opt"><input type="radio" name="experiencia" value="Basico"> Básico (cursos o talleres)</label>
+              <label class="radio-opt"><input type="radio" name="experiencia" value="Intermedio"> Intermedio (participé en simulacros)</label>
+              <label class="radio-opt"><input type="radio" name="experiencia" value="Avanzado"> Avanzado (misiones reales)</label>
+            </div>
+          </div>
+          <div class="cuest-section">
+            <p class="cuest-q">2. ¿Qué habilidades técnicas posees? <span class="hint-multi">(varias opciones)</span></p>
+            <div class="check-group">
+              <label class="check-opt"><input type="checkbox" name="habilidades" value="primeros_auxilios"> Primeros auxilios</label>
+              <label class="check-opt"><input type="checkbox" name="habilidades" value="rescate_urbano"> Rescate en estructuras colapsadas</label>
+              <label class="check-opt"><input type="checkbox" name="habilidades" value="busqueda"> Búsqueda y localización de personas</label>
+              <label class="check-opt"><input type="checkbox" name="habilidades" value="evacuacion"> Coordinación de evacuaciones</label>
+              <label class="check-opt"><input type="checkbox" name="habilidades" value="comunicaciones"> Comunicaciones de emergencia</label>
+              <label class="check-opt"><input type="checkbox" name="habilidades" value="logistica"> Logística y distribución de recursos</label>
+              <label class="check-opt"><input type="checkbox" name="habilidades" value="ninguna"> Ninguna por el momento</label>
+            </div>
+          </div>
+          <div class="cuest-section">
+            <p class="cuest-q">3. ¿Tienes alguna certificación oficial en protección civil o emergencias?</p>
+            <div class="radio-group">
+              <label class="radio-opt"><input type="radio" name="certificacion" value="Si"> Sí, vigente</label>
+              <label class="radio-opt"><input type="radio" name="certificacion" value="Vencida"> Sí, pero vencida</label>
+              <label class="radio-opt"><input type="radio" name="certificacion" value="En proceso"> En proceso de obtenerla</label>
+              <label class="radio-opt"><input type="radio" name="certificacion" value="No"> No tengo certificación</label>
+            </div>
+          </div>
+          <div class="cuest-section">
+            <p class="cuest-q">4. ¿Cuántas horas semanales puedes dedicar al voluntariado?</p>
+            <div class="radio-group">
+              <label class="radio-opt"><input type="radio" name="horas_semana" value="1-5"> 1 a 5 horas</label>
+              <label class="radio-opt"><input type="radio" name="horas_semana" value="6-10"> 6 a 10 horas</label>
+              <label class="radio-opt"><input type="radio" name="horas_semana" value="11-20"> 11 a 20 horas</label>
+              <label class="radio-opt"><input type="radio" name="horas_semana" value="Tiempo completo"> Tiempo completo en emergencias</label>
+            </div>
+          </div>
+          <div class="cuest-section">
+            <p class="cuest-q">5. ¿En qué tipo de desastres estás dispuesto a intervenir? <span class="hint-multi">(varias opciones)</span></p>
+            <div class="check-group cols-2">
+              <label class="check-opt"><input type="checkbox" name="tipo_desastre" value="sismo"> 🌍 Sismos</label>
+              <label class="check-opt"><input type="checkbox" name="tipo_desastre" value="inundacion"> 🌊 Inundaciones</label>
+              <label class="check-opt"><input type="checkbox" name="tipo_desastre" value="incendio"> 🔥 Incendios forestales</label>
+              <label class="check-opt"><input type="checkbox" name="tipo_desastre" value="volcan"> 🌋 Erupciones volcánicas</label>
+              <label class="check-opt"><input type="checkbox" name="tipo_desastre" value="tormenta"> ⛈️ Huracanes / tormentas</label>
+              <label class="check-opt"><input type="checkbox" name="tipo_desastre" value="derrumbe"> ⛰️ Derrumbes</label>
+              <label class="check-opt"><input type="checkbox" name="tipo_desastre" value="cualquiera"> ✅ Cualquier tipo</label>
+            </div>
+          </div>
+          <div class="cuest-section">
+            <p class="cuest-q">6. ¿Tienes alguna condición médica que limite tu participación?</p>
+            <div class="radio-group">
+              <label class="radio-opt"><input type="radio" name="condicion_medica" value="No"> No, estoy en buena condición física</label>
+              <label class="radio-opt"><input type="radio" name="condicion_medica" value="Leve"> Sí, leve (no me impide participar)</label>
+              <label class="radio-opt"><input type="radio" name="condicion_medica" value="Moderada"> Sí, moderada (requiero consideraciones)</label>
+              <label class="radio-opt"><input type="radio" name="condicion_medica" value="Prefiero no decir"> Prefiero no especificar</label>
+            </div>
+          </div>
+          <div class="cuest-section">
+            <p class="cuest-q">7. ¿Tienes vehículo disponible para desplazarte a zonas de emergencia?</p>
+            <div class="radio-group">
+              <label class="radio-opt"><input type="radio" name="vehiculo" value="Si, propio"> Sí, vehículo propio</label>
+              <label class="radio-opt"><input type="radio" name="vehiculo" value="Si, compartido"> Sí, pero compartido</label>
+              <label class="radio-opt"><input type="radio" name="vehiculo" value="No, transporte publico"> No, uso transporte público</label>
+              <label class="radio-opt"><input type="radio" name="vehiculo" value="No"> No cuento con transporte</label>
+            </div>
+          </div>
+          <div class="cuest-section">
+            <p class="cuest-q">8. ¿Por qué deseas ser voluntario en Guardian Zero? <span class="hint-multi">(opcional)</span></p>
+            <textarea name="motivacion" class="cuest-textarea" rows="3"
+              placeholder="Cuéntanos tu motivación..."></textarea>
+          </div>
+          <div class="cuest-footer">
+            <p class="cuest-aviso">⚠️ Tu perfil será revisado por el equipo de coordinación de Guardian Zero.</p>
+            <button type="submit" class="btn-cuest-submit">Enviar cuestionario</button>
+          </div>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Información de Voluntario / CV -->
+    <div class="pcard">
+      <h2 class="pcard-title">Información de Voluntario</h2>
+      <form method="POST" action="{{ url_for('dashboard.perfil_cv_actualizar') }}" class="cv-form">
+
+        {% set niv  = voluntario.Nivel_Experiencia      if voluntario else '' %}
+        {% set disp = voluntario.Horario_disponibilidad if voluntario else '' %}
+        {% set desc = curriculum.Descripcion_CV         if curriculum and curriculum.Descripcion_CV else '' %}
+
+        <!-- Nivel de experiencia -->
+        <div class="cv-dropdown" id="dd-nivel">
+          <div class="cv-dd-header" onclick="toggleDD('dd-nivel')">
+            <span class="cv-dd-label">Nivel de experiencia</span>
+            <span class="cv-dd-value" id="val-nivel">
+              {% if   niv == 'Ninguna'    %}Sin experiencia previa
+              {% elif niv == 'Basico'     %}Básico
+              {% elif niv == 'Intermedio' %}Intermedio
+              {% elif niv == 'Avanzado'   %}Avanzado
+              {% else %}Seleccionar...{% endif %}
+            </span>
+            <span class="cv-dd-arrow">▼</span>
+          </div>
+          <div class="cv-dd-body" style="display:none">
+            {% for val, label in [('Ninguna','Sin experiencia previa'),('Basico','Básico (cursos o talleres)'),('Intermedio','Intermedio (simulacros)'),('Avanzado','Avanzado (misiones reales)')] %}
+            <label class="cv-dd-opt">
+              <input type="radio" name="nivel_experiencia" value="{{ val }}"
+                     {% if niv == val %}checked{% endif %}
+                     onchange="setDDVal('val-nivel', '{{ label }}'); closeDD('dd-nivel')">
+              {{ label }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Disponibilidad semanal -->
+        <div class="cv-dropdown" id="dd-disp">
+          <div class="cv-dd-header" onclick="toggleDD('dd-disp')">
+            <span class="cv-dd-label">Disponibilidad semanal</span>
+            <span class="cv-dd-value" id="val-disp">
+              {% if   disp == '1-5'             %}1 a 5 horas
+              {% elif disp == '6-10'            %}6 a 10 horas
+              {% elif disp == '11-20'           %}11 a 20 horas
+              {% elif disp == 'Tiempo completo' %}Tiempo completo
+              {% else %}Seleccionar...{% endif %}
+            </span>
+            <span class="cv-dd-arrow">▼</span>
+          </div>
+          <div class="cv-dd-body" style="display:none">
+            {% for val, label in [('1-5','1 a 5 horas'),('6-10','6 a 10 horas'),('11-20','11 a 20 horas'),('Tiempo completo','Tiempo completo')] %}
+            <label class="cv-dd-opt">
+              <input type="radio" name="disponibilidad" value="{{ val }}"
+                     {% if disp == val %}checked{% endif %}
+                     onchange="setDDVal('val-disp', '{{ label }}'); closeDD('dd-disp')">
+              {{ label }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Especialidades -->
+        <div class="cv-dropdown" id="dd-esp">
+          <div class="cv-dd-header" onclick="toggleDD('dd-esp')">
+            <span class="cv-dd-label">Especialidades / Habilidades</span>
+            <span class="cv-dd-arrow">▼</span>
+          </div>
+          <div class="cv-dd-body" style="display:none">
+            {% set opciones = [
+              ('primeros_auxilios','Primeros auxilios'),
+              ('rescate_urbano','Rescate en estructuras colapsadas'),
+              ('busqueda','Búsqueda y localización de personas'),
+              ('evacuacion','Coordinación de evacuaciones'),
+              ('comunicaciones','Comunicaciones de emergencia'),
+              ('logistica','Logística y distribución de recursos')
+            ] %}
+            {% for val, label in opciones %}
+            <label class="cv-dd-opt">
+              <input type="checkbox" name="especialidades" value="{{ val }}"
+                     {% if val in desc %}checked{% endif %}>
+              {{ label }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <button type="submit" class="btn-guardar" style="margin-top:4px">Guardar cambios</button>
+      </form>
     </div>
 
   </div>
 
-  <!-- ================= DERECHA ================= -->
-  <div class="right">
+  <!-- ══ COLUMNA DERECHA ══ -->
+  <div class="col-right">
 
-    <!-- RESUMEN -->
-    <div class="card small">
-      <h2>Mi Resumen</h2>
-
-      <div class="resumen-box">
-        <canvas id="chart"></canvas>
-
-        <div class="legend">
-          <p><span style="background:#2bbfbf"></span> Trainings</p>
-          <p><span style="background:#4caf50"></span> Búsqueda</p>
-          <p><span style="background:#2196f3"></span> Field</p>
-          <p><span style="background:#ff9800"></span> Rescate</p>
-          <p><span style="background:#9c27b0"></span> Comandos</p>
+    <!-- Mi Resumen -->
+    <div class="pcard">
+      <h2 class="pcard-title">Mi Resumen</h2>
+      <div class="resumen-row">
+        <div class="donut-box">
+          <canvas id="donutChart" width="65" height="65"></canvas>
         </div>
+        <div class="resumen-meta">
+          <p class="resumen-total"><strong>Actividad del voluntario</strong></p>
+          <div class="legend-grid">
+            <div class="leg-item"><span class="leg-dot" style="background:#2bbfbf"></span> Capacitaciones</div>
+            <div class="leg-item"><span class="leg-dot" style="background:#4caf50"></span> Búsqueda y Rescate</div>
+            <div class="leg-item"><span class="leg-dot" style="background:#2196f3"></span> Primeros Auxilios</div>
+            <div class="leg-item"><span class="leg-dot" style="background:#ff9800"></span> Evacuación</div>
+            <div class="leg-item"><span class="leg-dot" style="background:#9c27b0"></span> Logística</div>
+            <div class="leg-item"><span class="leg-dot" style="background:#607d8b"></span> Comunicaciones</div>
+            <div class="leg-item"><span class="leg-dot" style="background:#f44336"></span> Reportes</div>
+          </div>
+        </div>
+        <p class="horas-txt"><strong>Total horas:</strong> {{ total_horas or '0' }}</p>
       </div>
-
-      <p class="horas"><b>Horas:</b> {{ total_horas or 0 }}</p>
     </div>
 
-    <!-- CERTIFICACIONES -->
-    <div class="card small">
-      <h2>Certificaciones</h2>
+    <!-- Certificaciones -->
+    <div class="pcard">
+      <h2 class="pcard-title">📄 Certificaciones</h2>
 
       {% if certificados %}
+      <div class="cert-grid">
         {% for cert in certificados %}
-          <div class="item">
-            <span>{{ cert.Nombre }}</span>
-            <small>{{ cert.Fecha }}</small>
+        <div class="cert-card">
+          <div class="cert-icon">🏅</div>
+          <div class="cert-info">
+            <p class="cert-nombre">{{ cert.Nombre }}</p>
+            <p class="cert-fecha-txt">{{ cert.Fecha }}</p>
           </div>
-        {% endfor %}
-      {% else %}
-        <p class="empty">Sin certificaciones</p>
-      {% endif %}
-
-      <a href="#" class="btn-outline">Ver certificados</a>
-    </div>
-
-    <!-- FOROS -->
-    <div class="card small">
-      <h2>Mis Foros</h2>
-
-      {% if mis_foros %}
-        {% for f in mis_foros[:2] %}
-        <div class="foro">
-          <img src="{{ url_for('static', filename='img/foro_default.jpg') }}">
-          <div>
-            <p>{{ f.Titulo }}</p>
-            <a href="{{ url_for('dashboard.foro_detalle', blog_id=f.ID_Blog) }}">Ver</a>
+          <div class="cert-actions">
+            <a href="{{ cert.Archivo }}" target="_blank" class="cert-download" title="Descargar">⬇️</a>
+            <form method="POST"
+                  action="{{ url_for('dashboard.eliminar_certificado', evidencia_id=cert.ID) }}"
+                  onsubmit="return confirm('¿Seguro que deseas eliminar este certificado?')"
+                  style="margin:0;padding:0;">
+              <button type="submit" class="cert-delete" title="Eliminar">🗑️</button>
+            </form>
           </div>
         </div>
         {% endfor %}
+      </div>
       {% else %}
-        <p class="empty">Sin actividad</p>
+      <p class="empty-hint" style="margin-bottom:12px">Sin certificaciones aún.</p>
       {% endif %}
 
-      <a href="{{ url_for('dashboard.foro') }}" class="btn-outline">Ir a foros</a>
+      <div class="cert-upload-section">
+        <div class="cert-upload-toggle" onclick="toggleCertUpload()">
+          <span>Agregar certificado</span>
+          <span class="cert-upload-arrow" id="cert-upload-arrow">▼</span>
+        </div>
+        <div id="cert-upload-body" style="display:none; margin-top:10px;">
+          <form method="POST" action="{{ url_for('dashboard.subir_certificado') }}"
+                enctype="multipart/form-data" class="cert-upload-form">
+            <input type="text" name="nombre_cert" placeholder="Nombre del certificado"
+                   class="cert-input" required>
+            <label class="cert-file-label" for="cert-file">
+              📎 Seleccionar archivo (PDF o imagen)
+              <input type="file" id="cert-file" name="archivo_cert"
+                     accept=".pdf,image/*" style="display:none"
+                     onchange="showFileName(this)">
+            </label>
+            <p class="cert-file-name" id="cert-file-name">Ningún archivo seleccionado</p>
+            <button type="submit" class="btn-guardar">Subir certificado</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="pcard">
+      <h2 class="pcard-title">Mis Foros</h2>
+      {% if mis_foros %}
+        <ul class="foros-list">
+          {% for f in mis_foros[:5] %}
+          <li class="foro-titulo-item">
+            <span class="foro-bullet">💬</span>
+            <span class="foro-titulo-txt">{{ f.Titulo }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-hint" style="margin-bottom:10px">No has publicado en el foro aún.</p>
+      {% endif %}
+      <a href="{{ url_for('dashboard.foro') }}" class="btn-outline-teal">Ver Foro</a>
     </div>
 
   </div>
-
 </div>
 
-<!-- ================= CHART ================= -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-new Chart(document.getElementById('chart'), {
+/* ── Gráfica ── */
+new Chart(document.getElementById('donutChart'), {
   type: 'doughnut',
   data: {
-    datasets: [{
-      data: [25,15,20,15,10],
-      backgroundColor: ['#2bbfbf','#4caf50','#2196f3','#ff9800','#9c27b0']
-    }]
+    labels: ['Capacitaciones','Búsqueda y Rescate','Primeros Auxilios','Evacuación','Logística','Comunicaciones','Reportes'],
+    datasets: [{ data: [30,20,18,12,10,6,4],
+      backgroundColor: ['#2bbfbf','#4caf50','#2196f3','#ff9800','#9c27b0','#607d8b','#f44336'],
+      borderWidth: 1, borderColor: '#f0f0f0' }]
   },
-  options: {
-    cutout: '70%',
-    responsive: true,
-    plugins: { legend: { display: false } }
+  options: { cutout:'60%', responsive:false, plugins:{ legend:{display:false} } }
+});
+
+/* ── Preview foto antes de subir ── */
+function previewFoto(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  if (file.size > 5 * 1024 * 1024) {
+    alert('La imagen no debe superar 5 MB.');
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const preview = document.getElementById('avatar-preview');
+    const empty   = document.getElementById('avatar-empty');
+    if (empty)   empty.style.display   = 'none';
+    preview.src   = e.target.result;
+    preview.style.display = 'block';
+    document.getElementById('btn-confirm-foto').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ── Toggle cuestionario ── */
+function toggleCuest() {
+  const body  = document.getElementById('cuest-body');
+  const arrow = document.getElementById('cuest-arrow');
+  const open  = body.style.display !== 'none';
+  body.style.display  = open ? 'none' : 'block';
+  arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+/* ── Progreso cuestionario ── */
+const TOTAL = 8;
+function updateProgress() {
+  const answered = new Set();
+  document.querySelectorAll('#cuest-form input[type="radio"]:checked').forEach(r => answered.add(r.name));
+  document.querySelectorAll('#cuest-form input[type="checkbox"]:checked').forEach(c => answered.add(c.name));
+  const mot = document.querySelector('textarea[name="motivacion"]');
+  if (mot && mot.value.trim().length > 0) answered.add('motivacion');
+  const count = answered.size;
+  document.getElementById('progress-text').textContent = count + ' / ' + TOTAL;
+  document.getElementById('progress-bar').style.width  = Math.round((count/TOTAL)*100) + '%';
+}
+const cuForm = document.getElementById('cuest-form');
+if (cuForm) {
+  cuForm.querySelectorAll('input, textarea').forEach(el => {
+    el.addEventListener('change', updateProgress);
+    el.addEventListener('input',  updateProgress);
+  });
+}
+
+/* ── Dropdowns info voluntario ── */
+function toggleDD(id) {
+  const dd = document.getElementById(id);
+  const body = dd.querySelector('.cv-dd-body');
+  const open = body.style.display !== 'none';
+  // cerrar todos primero
+  document.querySelectorAll('.cv-dropdown').forEach(el => {
+    el.classList.remove('open');
+    el.querySelector('.cv-dd-body').style.display = 'none';
+  });
+  if (!open) { body.style.display = 'block'; dd.classList.add('open'); }
+}
+function closeDD(id) {
+  const dd = document.getElementById(id);
+  dd.querySelector('.cv-dd-body').style.display = 'none';
+  dd.classList.remove('open');
+}
+function setDDVal(spanId, label) {
+  document.getElementById(spanId).textContent = label;
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.cv-dropdown')) {
+    document.querySelectorAll('.cv-dropdown').forEach(el => {
+      el.classList.remove('open');
+      el.querySelector('.cv-dd-body').style.display = 'none';
+    });
   }
 });
+
+/* ── Toggle agregar certificado ── */
+function toggleCertUpload() {
+  const body  = document.getElementById('cert-upload-body');
+  const arrow = document.getElementById('cert-upload-arrow');
+  const open  = body.style.display !== 'none';
+  body.style.display    = open ? 'none' : 'block';
+  arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+/* ── Nombre archivo certificado ── */
+function showFileName(input) {
+  const label = document.getElementById('cert-file-name');
+  label.textContent = input.files[0] ? input.files[0].name : 'Ningún archivo seleccionado';
+}
 </script>
 
-<!-- ================= ESTILOS ================= -->
 <style>
+.perfil-wrapper {
+  display: flex; gap: 18px; max-width: 1200px;
+  margin: 0 auto; align-items: flex-start;
+}
+.col-left  { flex: 1.8; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.col-right { flex: 1;   display: flex; flex-direction: column; gap: 14px; min-width: 260px; max-width: 320px; }
 
-.perfil-container{
-  display:flex;
-  gap:20px;
-  max-width:1100px;
-  margin:auto;
+.pcard { background: #e2eaed; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.pcard-title { font-size: 1.05rem; font-weight: 700; color: #1a3a4a; margin-bottom: 14px; }
+
+/* Datos */
+.datos-inner { display: flex; gap: 20px; background: #cfdde3; border-radius: 10px; padding: 16px 18px; align-items: flex-start; }
+.foto-col { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; width: 130px; }
+.avatar-ring { width: 115px; height: 115px; border-radius: 50%; overflow: hidden; border: 3px solid #1a9ea8; }
+.avatar-img  { width: 100%; height: 100%; object-fit: cover; }
+.avatar-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 3rem; background: #aac0c8; }
+.foto-btn { background: #1a9ea8; color: #fff; padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: inline-block; text-align: center; }
+.btn-upload-confirm { background: #2e9e6e; color: #fff; border: none; border-radius: 6px; padding: 5px 12px; font-size: 0.75rem; cursor: pointer; width: 100%; }
+.vol-status { font-size: 0.78rem; color: #1a3a4a; line-height: 1.5; text-align: center; }
+.badge-verde { color: #1a7a3a; font-weight: 700; }
+.badge-rojo  { color: #b03030; font-weight: 700; }
+.cert-line { font-size: 0.78rem; color: #1a3a4a; text-align: center; }
+.campos-col { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.campo-row { display: flex; align-items: center; background: #fff; border-radius: 8px; padding: 10px 14px; gap: 8px; }
+.campo-input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 0.88rem; color: #1a3a4a; }
+.campo-input::placeholder { color: #9ab0ba; }
+.campo-icon { font-size: 0.85rem; color: #9ab0ba; flex-shrink: 0; }
+.btn-guardar { background: #1a9ea8; color: #fff; border: none; border-radius: 8px; padding: 9px; font-size: 0.88rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 2px; }
+.btn-guardar:hover { background: #1a6b73; }
+
+/* Habilidades tags */
+.habilidades-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.hab-tag {
+  background: #1a9ea8; color: #fff;
+  font-size: .72rem; font-weight: 600;
+  padding: 3px 10px; border-radius: 20px;
+  white-space: nowrap;
 }
 
-/* columnas */
-.left{ flex:2; display:flex; flex-direction:column; gap:15px; }
-.right{ flex:1; display:flex; flex-direction:column; gap:15px; }
+/* Resumen */
+.resumen-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.donut-box   { width: 65px; height: 65px; flex-shrink: 0; overflow: hidden; }
+.resumen-meta { flex: 1; min-width: 180px; }
+.resumen-total { font-size: 0.71rem; color: #4a6475; margin-bottom: 7px; line-height: 1.4; }
+.legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; }
+.leg-item { display: flex; align-items: center; gap: 4px; font-size: 0.68rem; color: #1a3a4a; }
+.leg-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.horas-txt { font-size: 0.77rem; color: #4a6475; margin-top: 10px; width: 100%; border-top: 1px solid rgba(26,107,115,.12); padding-top: 8px; }
 
-/* cards */
-.card{
-  background:#e5eef2;
-  padding:15px;
-  border-radius:10px;
+/* CV / Info voluntario — dropdowns */
+.cv-form { display: flex; flex-direction: column; gap: 10px; }
+.cv-dropdown { border: 1px solid #cfdde3; border-radius: 8px; overflow: hidden; background: #fff; }
+.cv-dd-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; cursor: pointer; user-select: none;
+  transition: background .15s;
 }
-
-.card h2{
-  font-size:16px;
-  margin-bottom:10px;
+.cv-dd-header:hover { background: #f0f6f8; }
+.cv-dd-label { font-size: .78rem; font-weight: 600; color: #4a6475; flex-shrink: 0; min-width: 150px; }
+.cv-dd-value { flex: 1; font-size: .85rem; color: #1a3a4a; }
+.cv-dd-arrow { font-size: .6rem; color: #8a9eaa; transition: transform .2s; flex-shrink: 0; }
+.cv-dropdown.open .cv-dd-arrow { transform: rotate(180deg); }
+.cv-dd-body  { border-top: 1px solid #e2eaed; padding: 6px 0; }
+.cv-dd-opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px; font-size: .83rem; color: #1a3a4a;
+  cursor: pointer; transition: background .15s;
 }
+.cv-dd-opt:hover { background: #f0f6f8; }
+.cv-dd-opt input { accent-color: #1a9ea8; flex-shrink: 0; }
 
-/* tamaños */
-.big{ padding:20px; }
-.small{ padding:12px; }
-
-/* layout perfil */
-.perfil-top{
-  display:flex;
-  gap:25px;
-  align-items:flex-start;
+/* ── Cuestionario desplegable ── */
+.cuestionario-card { background: #fff; border: 2px solid #d0e4ea; }
+.cuest-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; padding: 4px 0; user-select: none;
 }
+.cuest-toggle:hover { opacity: .85; }
+.cuest-toggle-left { display: flex; align-items: center; gap: 12px; }
+.cuest-icon        { font-size: 1.8rem; }
+.cuest-toggle-title { font-size: .95rem; font-weight: 700; color: #1a3a4a; }
+.cuest-toggle-sub   { font-size: .78rem; color: #4a6475; margin-top: 2px; }
+.cuest-arrow { font-size: .8rem; color: #4a6475; transition: transform .3s; }
+.cuest-body  { padding-top: 18px; }
 
-/* avatar */
-.avatar-box{
-  width:140px;
-  text-align:center;
-  flex-shrink:0;
+/* Ya respondió */
+.cuest-respondido { text-align: center; padding: 10px 0; }
+.cuest-resp-msg   { font-size: .88rem; color: #1a7a3a; font-weight: 600; margin-bottom: 12px; }
+.cuest-resp-detalle { background: #f4f8fa; border-radius: 8px; padding: 12px; text-align: left; }
+.cuest-resp-label { font-size: .75rem; font-weight: 700; color: #4a6475; margin-bottom: 6px; }
+.cuest-resp-texto { font-size: .78rem; color: #1a3a4a; line-height: 1.6; }
+
+/* Progreso */
+.progress-header { margin-bottom: 16px; }
+.progress-label  { font-size: .78rem; color: #4a6475; display: block; margin-bottom: 5px; }
+.progress-track  { height: 8px; background: #dde8ec; border-radius: 4px; overflow: hidden; }
+.progress-fill   { height: 100%; background: #1a9ea8; border-radius: 4px; transition: width .4s ease; }
+
+/* Secciones */
+.cuest-section { background: #f4f8fa; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; border-left: 3px solid #1a9ea8; }
+.cuest-q { font-size: .88rem; font-weight: 600; color: #1a3a4a; margin-bottom: 10px; line-height: 1.4; }
+.hint-multi { font-size: .72rem; color: #8a9eaa; font-weight: 400; }
+.radio-group { display: flex; flex-direction: column; gap: 6px; }
+.radio-opt {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .82rem; color: #1a3a4a; cursor: pointer;
+  padding: 5px 8px; border-radius: 6px; transition: background .15s;
 }
-
-.avatar-box img{
-  width:110px;
-  height:110px;
-  border-radius:50%;
-  object-fit:cover;
-  border:3px solid #2bbfbf;
+.radio-opt:hover { background: #e2eaed; }
+.radio-opt input[type="radio"] { accent-color: #1a9ea8; width: 15px; height: 15px; flex-shrink: 0; }
+.check-group { display: flex; flex-direction: column; gap: 6px; }
+.check-group.cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
+.check-opt {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .82rem; color: #1a3a4a; cursor: pointer;
+  padding: 5px 8px; border-radius: 6px; transition: background .15s;
 }
+.check-opt:hover { background: #e2eaed; }
+.check-opt input[type="checkbox"] { accent-color: #1a9ea8; width: 15px; height: 15px; flex-shrink: 0; }
+.cuest-textarea { width: 100%; border: 1px solid #cfdde3; border-radius: 8px; padding: 10px 12px; font-size: .85rem; color: #1a3a4a; resize: vertical; outline: none; font-family: inherit; background: #fff; }
+.cuest-textarea:focus { border-color: #1a9ea8; }
+.cuest-footer  { margin-top: 16px; }
+.cuest-aviso   { font-size: .75rem; color: #8a6a00; background: #fff8e1; padding: 8px 12px; border-radius: 7px; margin-bottom: 10px; border-left: 3px solid #e09c42; }
+.btn-cuest-submit { width: 100%; background: #1a9ea8; color: #fff; border: none; border-radius: 10px; padding: 11px; font-size: .95rem; font-weight: 700; cursor: pointer; transition: background .2s; }
+.btn-cuest-submit:hover { background: #1a6b73; }
 
-.avatar-placeholder{
-  width:110px;
-  height:110px;
-  border-radius:50%;
-  background:#ccc;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:32px;
+/* ── Certificados ── */
+.cert-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.cert-card {
+  display: flex; align-items: center; gap: 12px;
+  background: #cfdde3; border-radius: 8px; padding: 10px 14px;
 }
+.cert-icon     { font-size: 1.4rem; flex-shrink: 0; }
+.cert-info     { flex: 1; min-width: 0; }
+.cert-nombre   { font-size: .85rem; font-weight: 600; color: #1a3a4a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+.cert-fecha-txt{ font-size: .75rem; color: #4a6475; }
+.cert-actions  { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.cert-download { font-size: 1.2rem; text-decoration: none; line-height: 1; }
+.cert-delete   { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 0; line-height: 1; opacity: .6; transition: opacity .2s; }
+.cert-delete:hover { opacity: 1; }
 
-/* boton foto */
-.btn-mini{
-  display:inline-block;
-  background:#2bbfbf;
-  color:white;
-  padding:5px 10px;
-  border-radius:6px;
-  font-size:12px;
-  cursor:pointer;
-  margin-top:6px;
+.cert-upload-section { border-top: 1px solid rgba(26,107,115,.15); padding-top: 12px; margin-top: 8px; }
+.cert-upload-toggle {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: .88rem; font-weight: 600; color: #1a3a4a;
+  cursor: pointer; user-select: none; padding: 4px 0;
 }
-
-/* estado */
-.status{ font-size:12px; }
-.ok{ color:green; }
-.bad{ color:red; }
-
-/* FORM MEJORADO 🔥 */
-.form-box{
-  flex:1;
-  width:100%;
+.cert-upload-toggle:hover { color: #1a9ea8; }
+.cert-upload-arrow { font-size: .6rem; transition: transform .2s; }
+.cert-upload-form    { display: flex; flex-direction: column; gap: 8px; }
+.cert-input {
+  border: 1px solid #cfdde3; border-radius: 8px; padding: 9px 12px;
+  font-size: .85rem; color: #1a3a4a; outline: none; background: #fff;
 }
-
-.form-box form{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  width:100%;
+.cert-input:focus { border-color: #1a9ea8; }
+.cert-file-label {
+  display: flex; align-items: center; gap: 8px;
+  background: #f4f8fa; border: 1.5px dashed #1a9ea8;
+  border-radius: 8px; padding: 10px 14px; cursor: pointer;
+  font-size: .82rem; color: #1a9ea8; font-weight: 600; transition: background .2s;
 }
+.cert-file-label:hover { background: #e2eaed; }
+.cert-file-name { font-size: .75rem; color: #4a6475; }
 
-/* 🔥 INPUTS MÁS LARGOS */
-.form-box input{
-  width:100%;
-  padding:12px 14px;
-  border:none;
-  border-radius:10px;
-  font-size:14px;
-  box-sizing:border-box;
+/* Foros */
+.cert-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.cert-item { display: flex; justify-content: space-between; background: #cfdde3; padding: 7px 10px; border-radius: 6px; font-size: .82rem; }
+.foros-list { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.foro-titulo-item { display: flex; align-items: flex-start; gap: 8px; background: #cfdde3; border-radius: 8px; padding: 9px 12px; }
+.foro-bullet { font-size: .95rem; flex-shrink: 0; }
+.foro-titulo-txt { font-size: .82rem; font-weight: 500; color: #1a3a4a; line-height: 1.4; }
+.btn-outline-teal { display: block; text-align: center; border: 1.5px solid #1a3a4a; color: #1a3a4a; padding: 8px; border-radius: 7px; background: white; font-size: .82rem; font-weight: 600; text-decoration: none; margin-top: 4px; transition: all .2s; }
+.btn-outline-teal:hover { background: #1a9ea8; color: #fff; border-color: #1a9ea8; }
+.empty-hint { font-size: .82rem; color: #8a9eaa; font-style: italic; }
+
+@media (max-width: 820px) {
+  .perfil-wrapper { flex-direction: column; }
+  .col-right { max-width: 100%; }
+  .datos-inner { flex-direction: column; align-items: center; }
+  .check-group.cols-2 { grid-template-columns: 1fr; }
 }
-
-.form-box input:focus{
-  outline:none;
-  box-shadow:0 0 0 2px rgba(43,191,191,0.3);
-}
-
-/* BOTON */
-.form-box button{
-  background:#2bbfbf;
-  color:white;
-  border:none;
-  padding:12px;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:600;
-}
-
-/* skills */
-.skill{ margin-bottom:8px; }
-.bar{ background:#ccc; height:6px; border-radius:3px; }
-.bar div{ background:#2bbfbf; height:100%; }
-
-/* resumen */
-.resumen-box{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.resumen-box canvas{
-  width:80px !important;
-  height:80px !important;
-}
-
-/* listas */
-.item{
-  display:flex;
-  justify-content:space-between;
-  font-size:12px;
-  background:white;
-  padding:6px;
-  border-radius:5px;
-  margin-bottom:5px;
-}
-
-/* foros */
-.foro{
-  display:flex;
-  gap:8px;
-  background:white;
-  padding:6px;
-  border-radius:6px;
-  margin-bottom:6px;
-}
-
-.foro img{
-  width:60px;
-  border-radius:5px;
-}
-
-/* botones */
-.btn-outline{
-  display:block;
-  text-align:center;
-  border:1px solid #2bbfbf;
-  color:#2bbfbf;
-  padding:6px;
-  border-radius:6px;
-  font-size:12px;
-  margin-top:8px;
-}
-
-/* textos */
-.empty{
-  font-size:12px;
-  color:gray;
-}
-
-.horas{
-  font-size:12px;
-  margin-top:5px;
-}
-
-/* RESPONSIVE */
-@media (max-width:768px){
-  .perfil-top{
-    flex-direction:column;
-    align-items:center;
-  }
-}
-
 </style>
-
 {% endblock %}

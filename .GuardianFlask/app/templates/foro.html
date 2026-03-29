@@ -31,7 +31,7 @@
             <p>Autor: {{ d.Autor }} / {{ d.Tipo }}</p>
             <p class="disc-time">Publicado {{ d.Tiempo }}</p>
           </div>
-          <a href="/foro/{{ d.ID }}" class="btn-comentario">Ver comentario</a>
+          <a href="{{ url_for('dashboard.foro_detalle', blog_id=d.ID) }}" class="btn-comentario">Ver comentario</a>
         </div>
         {% endfor %}
       {% else %}
@@ -56,7 +56,7 @@
     </div>
 
     <div class="nueva-disc-wrapper">
-      <a href="/foro/nueva" class="btn-nueva">Crear Nueva Discusión</a>
+      <a href="{{ url_for('dashboard.foro_nueva') }}" class="btn-nueva">Crear Nueva Discusión</a>
     </div>
   </div>
 
@@ -75,21 +75,21 @@
         <div class="blog-card-body">
           <h4>LECCIONES APRENDIDAS: SISMO DEL 19 SEPTIEMBRE 2017</h4>
           <p>Compendio de experiencias, recomendaciones de expertos y aprendizajes claves.</p>
-          <a href="/blog/1" class="btn-blog">+ Ver Guía/Blog</a>
+          <a href="#" class="btn-blog">+ Ver Guía/Blog</a>
         </div>
       </div>
 
       <!-- Categorías de blogs -->
       <div class="blog-categories">
-        <a href="/blog/seguridad" class="cat-item">
+        <a href="#" class="cat-item">
           <span class="cat-icon">🪜</span>
           <span>Recomendaciones de Seguridad</span>
         </a>
-        <a href="/blog/primeros-auxilios" class="cat-item">
+        <a href="#" class="cat-item">
           <span class="cat-icon">🧳</span>
           <span>Guías de Primeros Auxilios</span>
         </a>
-        <a href="/blog/experiencias" class="cat-item">
+        <a href="#" class="cat-item">
           <span class="cat-icon">✅</span>
           <span>Experiencias de Voluntarios</span>
         </a>
@@ -103,7 +103,7 @@
 <div id="modal-disc" class="modal-overlay" style="display:none;">
   <div class="modal-box">
     <h3>Nueva Discusión</h3>
-    <form method="POST" action="/foro/nueva">
+    <form method="POST" action="{{ url_for('dashboard.foro_nueva') }}">
       <input type="text" name="titulo" placeholder="Título de la discusión" class="modal-input" required>
       <textarea name="contenido" placeholder="Describe tu pregunta o experiencia..." class="modal-textarea" rows="5" required></textarea>
       <div class="modal-actions">
@@ -157,7 +157,9 @@
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal-box { background: white; border-radius: 12px; padding: 28px; width: 460px; max-width: 95vw; }
 .modal-box h3 { margin: 0 0 16px; color: #1a7a7a; }
-.modal-input, .modal-textarea { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 0.9rem; margin-bottom: 12px; }
+.modal-input, .modal-textarea { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 0.9rem; margin-bottom: 12px; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
+.modal-input { white-space: normal; }
+.modal-textarea { resize: vertical; min-height: 100px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .btn-cancel { background: #eee; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; }
 .btn-send { background: #2bbfbf; color: white; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; }
