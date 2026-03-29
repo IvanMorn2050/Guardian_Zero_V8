@@ -23,4 +23,9 @@ Route::middleware(['fakeauth'])->group(function () {
     // Actualizar estatus de un reporte desde la vista de incidentes
     Route::patch('/admin/incidentes/{id}/estatus', [AdminController::class, 'actualizarEstatus']);
 
+    // Gestión de usuarios
+    Route::post('/admin/usuarios',        [AdminController::class, 'crearUsuario']);
+    Route::patch('/admin/usuarios/{id}',  [AdminController::class, 'actualizarUsuario']);
+    Route::delete('/admin/usuarios/{id}', [AdminController::class, 'eliminarUsuario']);
+
 });

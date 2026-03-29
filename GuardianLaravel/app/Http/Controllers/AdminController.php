@@ -87,6 +87,51 @@ class AdminController extends Controller
         return view('admin.usuarios', compact('usuarios'));
     }
 
+    public function crearUsuario(Request $request)
+    {
+        $request->validate([
+            'Nombre'     => 'required|string|max:100',
+            'Email'      => 'required|email|unique:usuario,Email',
+            'Telefono'   => 'nullable|string|max:20',
+            'Direccion'  => 'nullable|string|max:255',
+            'Contraseña' => 'required|string|min:4',
+            'Rol'        => 'required|in:Administrador,Especialista,Voluntario,Civil',
+        ]);
+
+        Usuario::create([
+            'Nombre'         => $request->Nombre,
+            'Email'          => $request->Email,
+            'Telefono'       => $request->Telefono,
+            'Direccion'      => $request->Direccion,
+            'Contraseña'     => $request->Contraseña,
+            'Rol'            => $request->Rol,
+            'Fecha_Registro' => now()->toDateString(),
+        ]);
+
+        return back()->with('success', 'Usuario creado correctamente.');
+    }
+
+    public function actualizarUsuario(Request $request, $id)
+    {
+        $request->validate([
+            'rol' => 'required|in:Administrador,Especialista,Voluntario,Civil',
+        ]);
+
+        $usuario = Usuario::findOrFail($id);
+        $usuario->Rol = $request->rol;
+        $usuario->save();
+
+        return back()->with('success', 'Rol del usuario actualizado correctamente.');
+    }
+
+    public function eliminarUsuario($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        $usuario->delete();
+
+        return back()->with('success', 'Usuario eliminado correctamente.');
+    }
+
     public function estadisticas()
     {
         $hoy = now()->toDateString();
